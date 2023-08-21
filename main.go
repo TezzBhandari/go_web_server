@@ -3,9 +3,12 @@
 package main
 
 import (
-	"fmt"
-	"io"
+	"log"
 	"net/http"
+	"os"
+	"time"
+
+	"github.com/TezzBhandari/go_web_server/handlers"
 )
 
 func main() {
@@ -47,21 +50,38 @@ func main() {
 	// 	}
 	// }
 
-	http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
-		// read the data from the request
-		d, err := io.ReadAll(r.Body)
-		if err != nil {
-			// rw.WriteHeader(http.StatusBadRequest)
-			// rw.Write([]byte("Oops!"))
+	// http.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
+	// 	// read the data from the request
+	// 	d, err := io.ReadAll(r.Body)
+	// 	if err != nil {
+	// 		// rw.WriteHeader(http.StatusBadRequest)
+	// 		// rw.Write([]byte("Oops!"))
 
-			http.Error(rw, "Oops", http.StatusBadRequest)
-			return
-		}
-		fmt.Printf("%s\n", d)
+	// 		http.Error(rw, "Oops", http.StatusBadRequest)
+	// 		return
+	// 	}
+	// 	fmt.Printf("%s\n", d)
 
-		fmt.Fprintf(rw, "Hello %s", d)
-		// rw.Write([]byte("hello world"))
-	})
+	// 	fmt.Fprintf(rw, "Hello %s", d)
+	// 	// rw.Write([]byte("hello world"))
+	// })
 
-	http.ListenAndServe(":8080", nil)
+	// http.ListenAndServe(":8080", nil)
+	log := log.New(os.Stdout, "Product-Api ", log.LstdFlags)
+
+	hello_handler := handlers.NewHello(log)
+
+	sm := http.NewServeMux()
+
+	sm.Handle("/", hello_handler)
+
+	server := &http.Server{
+		Addr:         ":8080",
+		Handler:      sm,
+		IdleTimeout:  120 * time.Second,
+		ReadTimeout:  1 * time.Second,
+		WriteTimeout: 1 * time.Second,
+	}
+
+	server.ListenAndServe()
 }
