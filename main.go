@@ -94,17 +94,22 @@ func main() {
 		}
 	}()
 
+	// catches all the signals for shutting down server
 	sigChan := make(chan os.Signal, 1)
 
 	signal.Notify(sigChan, os.Interrupt)
 	signal.Notify(sigChan, syscall.SIGTERM)
 
+	// blocking code. waits for signal
 	sig := <-sigChan
 
 	log.Println("Received Terminate, Graceful Shutdown ", sig)
 
+	// this is required to forceful shutdown if the server doesn't shutdown after 30 seconds
 	timeout_ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
+
+	// gracefully shutdowns the server
 	server.Shutdown(timeout_ctx)
 
 }
