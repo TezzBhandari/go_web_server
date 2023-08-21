@@ -3,9 +3,12 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/TezzBhandari/go_web_server/handlers"
@@ -83,5 +86,25 @@ func main() {
 		WriteTimeout: 1 * time.Second,
 	}
 
-	server.ListenAndServe()
+	go func() {
+
+		err := server.ListenAndServe()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	sigChan := make(chan os.Signal, 1)
+
+	signal.Notify(sigChan, os.Interrupt)
+	signal.Notify(sigChan, syscall.SIGTERM)
+
+	sig := <-sigChan
+
+	log.Println("Received Terminate, Graceful Shutdown ", sig)
+
+	timeout_ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancel()
+	server.Shutdown(timeout_ctx)
+
 }
