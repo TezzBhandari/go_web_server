@@ -73,10 +73,12 @@ func main() {
 	log := log.New(os.Stdout, "Product-Api ", log.LstdFlags)
 
 	hello_handler := handlers.NewHello(log)
+	product_handler := handlers.NewProduct(log)
 
 	sm := http.NewServeMux()
 
 	sm.Handle("/", hello_handler)
+	sm.Handle("/products", product_handler)
 
 	server := &http.Server{
 		Addr:         ":8080",
