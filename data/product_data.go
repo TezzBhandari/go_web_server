@@ -36,6 +36,8 @@ func getNextID() int {
 	return lastItem.ID + 1
 }
 
+// On the Data
+
 type Products []*Product
 
 func (products *Products) ToJson(w io.Writer) error {

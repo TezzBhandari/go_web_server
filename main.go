@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/TezzBhandari/go_web_server/handlers"
+	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -70,13 +71,34 @@ func main() {
 	// http.ListenAndServe(":8080", nil)
 	log := log.New(os.Stdout, "Product-Api ", log.LstdFlags)
 
-	hello_handler := handlers.NewHello(log)
+	// hello_handler := handlers.NewHello(log)
 	product_handler := handlers.NewProduct(log)
 
-	sm := http.NewServeMux()
+	// sm := http.NewServeMux()
+	sm := mux.NewRouter()
+	getRouter := sm.Methods(http.MethodGet).Subrouter()
+	// sm.Handle("/", hello_handler)
+	getRouter.HandleFunc("/products", product_handler.GetProducts)
+	// sm.Handle("/products", product_handler)
 
-	sm.Handle("/", hello_handler)
-	sm.Handle("/products", product_handler)
+	putRouter := sm.Methods(http.MethodPut).Subrouter()
+	putRouter.HandleFunc("/products/{id:[0-9]+}", product_handler.UpdateProducts)
+	putRouter.Use(product_handler.MiddlewareProductValidation)
+
+	postRouter := sm.Methods(http.MethodPost).Subrouter()
+	postRouter.HandleFunc("/products", product_handler.AddProduct)
+	postRouter.Use(product_handler.MiddlewareProductValidation)
+
+	// converting the function into handler
+	time_handler := http.HandlerFunc(CustomHandler)
+
+	// register time handler in serveMux
+	// sm.Handle("/time", Middleware(time_handler))
+
+	sm.Handle("/time", time_handler)
+
+	// using middleware using gorilla mux router
+	sm.Use(Middleware)
 
 	server := &http.Server{
 		Addr:         ":8080",
@@ -112,4 +134,19 @@ func main() {
 	// gracefully shutdowns the server
 	server.Shutdown(timeout_ctx)
 
+}
+
+// creating a function for handling request. later this function will be converted in handler
+func CustomHandler(rw http.ResponseWriter, r *http.Request) {
+	tm := time.Now().Format(time.RFC1123)
+	rw.Write([]byte("The time is: " + tm))
+
+}
+
+func Middleware(next http.Handler) http.Handler {
+	time_handler := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Set("fuck", "you")
+		next.ServeHTTP(rw, r)
+	})
+	return time_handler
 }
